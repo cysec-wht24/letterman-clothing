@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
+import * as THREE from 'three'
 import Scene from './Scene'
-import LogoEditor from './LogoEditor'
+import { PLACEMENT_ZONES } from './ShirtModel'
 import { COLOR_PALETTE, CATEGORIES, DEFAULT_COLOR_ID } from './colors'
 import './App.css'
 
@@ -14,22 +15,61 @@ function ColorSwatch({ color, isSelected, onClick }) {
   )
 }
 
+// Zone card — mimics varsitybase style
+function ZoneCard({ zone, isSelected, onClick }) {
+  return (
+    <button
+      className={`zone-card ${isSelected ? 'selected' : ''}`}
+      onClick={() => onClick(zone)}
+    >
+      <div className="zone-preview">
+        {/* Mini shirt SVG with highlighted zone indicator */}
+        <svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg" className="zone-svg">
+          {/* Shirt body */}
+          <path d="M18 8 L8 20 L16 23 L16 62 L44 62 L44 23 L52 20 L42 8 L34 12 Q30 14 26 12 Z"
+            fill="#2a2520" stroke="#3a3530" strokeWidth="0.8"/>
+          {/* Sleeves */}
+          <path d="M18 8 L8 20 L16 23 L18 18 Z" fill="#222" stroke="#3a3530" strokeWidth="0.6"/>
+          <path d="M42 8 L52 20 L44 23 L42 18 Z" fill="#222" stroke="#3a3530" strokeWidth="0.6"/>
+          {/* Zone highlight */}
+          {zone.id === 'left-chest'   && <rect x="18" y="22" width="11" height="9" fill="#c8a96e" opacity="0.7" rx="1"/>}
+          {zone.id === 'right-chest'  && <rect x="31" y="22" width="11" height="9" fill="#c8a96e" opacity="0.7" rx="1"/>}
+          {zone.id === 'center-chest' && <rect x="21" y="22" width="18" height="13" fill="#c8a96e" opacity="0.7" rx="1"/>}
+          {zone.id === 'back-center'  && <rect x="20" y="28" width="20" height="18" fill="#c8a96e" opacity="0.7" rx="1"/>}
+          {zone.id === 'left-sleeve'  && <rect x="9"  y="13" width="8"  height="8"  fill="#c8a96e" opacity="0.7" rx="1"/>}
+          {zone.id === 'right-sleeve' && <rect x="43" y="13" width="8"  height="8"  fill="#c8a96e" opacity="0.7" rx="1"/>}
+        </svg>
+      </div>
+      <span className="zone-label">{zone.label}</span>
+    </button>
+  )
+}
+
 export default function App() {
   const [selectedColorId, setSelectedColorId] = useState(DEFAULT_COLOR_ID)
   const [activeCategory, setActiveCategory] = useState('All')
-  const [autoRotate, setAutoRotate] = useState(true)
+  const [autoRotate, setAutoRotate] = useState(false)
   const [isInteracting, setIsInteracting] = useState(false)
   const [showColorName, setShowColorName] = useState(false)
-  const [activeTab, setActiveTab] = useState('color') // 'color' | 'logo'
-  const [textureCanvas, setTextureCanvas] = useState(null)
-  const [logoEnabled, setLogoEnabled] = useState(false)
+  const [activeTab, setActiveTab] = useState('color')
+  const [selectedZoneId, setSelectedZoneId] = useState(null)
+  const [logoTexture, setLogoTexture] = useState(null)
   const nameTimerRef = useRef(null)
-  const logoEditorRef = useRef(null)
 
   const selectedColor = COLOR_PALETTE.find(c => c.id === selectedColorId)
   const filteredColors = activeCategory === 'All'
     ? COLOR_PALETTE
     : COLOR_PALETTE.filter(c => c.category === activeCategory)
+
+  // Load logo texture once
+  useEffect(() => {
+    const loader = new THREE.TextureLoader()
+    loader.load('/logo.png', (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace
+      tex.needsUpdate = true
+      setLogoTexture(tex)
+    })
+  }, [])
 
   const handleColorSelect = useCallback((color) => {
     if (color.id === selectedColorId) return
@@ -51,22 +91,13 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [selectedColorId, handleColorSelect])
 
-  const handleCanvasUpdate = useCallback((canvas) => {
-    if (logoEnabled) setTextureCanvas(canvas)
-  }, [logoEnabled])
-
-  const handleLogoToggle = (enabled) => {
-    setLogoEnabled(enabled)
-    if (!enabled) {
-      setTextureCanvas(null)
-    } else {
-      // Trigger snapshot from fabric canvas if it exists
-      if (logoEditorRef.current) {
-        const snap = logoEditorRef.current.snapshot()
-        if (snap) setTextureCanvas(snap)
-      }
-    }
+  const handleZoneSelect = (zone) => {
+    setSelectedZoneId(prev => prev === zone.id ? null : zone.id)
+    // Auto-rotate to show the selected zone
+    if (zone.id === 'back-center') setAutoRotate(false)
   }
+
+  const selectedZone = PLACEMENT_ZONES.find(z => z.id === selectedZoneId)
 
   return (
     <div className="app">
@@ -120,6 +151,24 @@ export default function App() {
             </button>
             <p className="hint-text">Drag to orbit · Scroll to zoom</p>
           </div>
+
+          {/* Active placement status */}
+          {selectedZoneId && (
+            <>
+              <div className="divider" />
+              <div className="panel-section">
+                <div className="panel-label">ACTIVE PLACEMENT</div>
+                <div className="active-zone-display">
+                  <span className="active-zone-icon">{selectedZone?.icon}</span>
+                  <div>
+                    <div className="active-zone-name">{selectedZone?.label}</div>
+                    <div className="active-zone-sub">Logo placed on shirt</div>
+                  </div>
+                  <button className="remove-btn" onClick={() => setSelectedZoneId(null)}>✕</button>
+                </div>
+              </div>
+            </>
+          )}
         </aside>
 
         {/* VIEWPORT */}
@@ -130,19 +179,11 @@ export default function App() {
                 color={selectedColor?.hex || '#F8F6F2'}
                 autoRotate={autoRotate && !isInteracting}
                 onInteractionChange={handleInteractionChange}
-                textureCanvas={logoEnabled ? textureCanvas : null}
+                selectedZoneId={selectedZoneId}
+                logoTexture={logoTexture}
               />
             </Suspense>
           </div>
-
-          {/* Logo Editor Panel — overlaid bottom of viewport */}
-          <LogoEditor
-            ref={logoEditorRef}
-            shirtColor={selectedColor?.hex || '#F8F6F2'}
-            logoSrc="/logo.jpg"
-            onCanvasUpdate={handleCanvasUpdate}
-            visible={activeTab === 'logo' && logoEnabled}
-          />
 
           <div className={`color-toast ${showColorName ? 'visible' : ''}`}>
             <span className="toast-swatch" style={{ background: selectedColor?.hex }} />
@@ -155,8 +196,6 @@ export default function App() {
 
         {/* RIGHT PANEL */}
         <aside className="panel panel-right">
-
-          {/* Tab switcher */}
           <div className="panel-tabs">
             <button className={`panel-tab ${activeTab === 'color' ? 'active' : ''}`}
               onClick={() => setActiveTab('color')}>COLOR</button>
@@ -206,53 +245,35 @@ export default function App() {
           {activeTab === 'logo' && (
             <div className="logo-tab-content">
               <div className="panel-section">
-                <div className="panel-label-row">
-                  <span className="panel-label">LOGO PLACEMENT</span>
-                  <button
-                    className={`toggle-small ${logoEnabled ? 'active' : ''}`}
-                    onClick={() => handleLogoToggle(!logoEnabled)}>
-                    {logoEnabled ? 'ON' : 'OFF'}
-                  </button>
-                </div>
-                {!logoEnabled && (
-                  <p className="hint-text" style={{marginTop: 8}}>
-                    Toggle ON to place your logo on the shirt
-                  </p>
-                )}
-                {logoEnabled && (
-                  <div className="logo-instructions">
-                    <div className="instruction-row">
-                      <span className="inst-icon">↔</span>
-                      <span className="inst-text">Drag to reposition</span>
-                    </div>
-                    <div className="instruction-row">
-                      <span className="inst-icon">⤡</span>
-                      <span className="inst-text">Corner handles to resize</span>
-                    </div>
-                    <div className="instruction-row">
-                      <span className="inst-icon">↻</span>
-                      <span className="inst-text">Top handle to rotate</span>
-                    </div>
-                    <div className="instruction-row">
-                      <span className="inst-icon">◈</span>
-                      <span className="inst-text">Preview updates on shirt live</span>
-                    </div>
+                <div className="panel-label">LOGO PREVIEW</div>
+                <div className="logo-preview-card">
+                  <img src="/logo.png" alt="Logo" className="logo-thumb" />
+                  <div className="logo-preview-info">
+                    <span className="logo-preview-name">Custom Logo</span>
+                    <span className="logo-preview-sub">Select a zone below</span>
                   </div>
-                )}
+                </div>
               </div>
 
-              {logoEnabled && (
-                <div className="panel-section">
-                  <div className="panel-label">CURRENT COLOR</div>
-                  <div className="logo-color-preview">
-                    <div className="selected-preview small" style={{ background: selectedColor?.hex }} />
-                    <span className="selected-name small">{selectedColor?.name}</span>
-                  </div>
-                  <p className="hint-text" style={{marginTop:6}}>
-                    Switch to Color tab to change shirt color
-                  </p>
+              <div className="panel-section" style={{paddingBottom: 8}}>
+                <div className="panel-label">PLACEMENT ZONE</div>
+                <p className="hint-text" style={{marginBottom: 12}}>
+                  Select where to place your logo on the shirt
+                </p>
+              </div>
+
+              <div className="zone-grid-wrap">
+                <div className="zone-grid">
+                  {PLACEMENT_ZONES.map(zone => (
+                    <ZoneCard
+                      key={zone.id}
+                      zone={zone}
+                      isSelected={selectedZoneId === zone.id}
+                      onClick={handleZoneSelect}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           )}
 
