@@ -16,7 +16,7 @@ export default function ShirtModel({ color, autoRotate, selectedZoneId, logoText
   const groupRef    = useRef()
   const logoMeshRef = useRef(null)
   const boundsRef   = useRef(null)   // stores { min, max, center } after normalization
-  const { scene }   = useGLTF('/t_shirt.glb')
+  const { scene } = useGLTF(import.meta.env.BASE_URL + 't_shirt.glb')
   const { camera, controls } = useThree()
   const readyRef    = useRef(false)
 
@@ -166,4 +166,4 @@ export default function ShirtModel({ color, autoRotate, selectedZoneId, logoText
   )
 }
 
-useGLTF.preload('/t_shirt.glb')
+useGLTF.preload(import.meta.env.BASE_URL + 't_shirt.glb')

@@ -64,7 +64,7 @@ export default function App() {
   // Load logo texture once
   useEffect(() => {
     const loader = new THREE.TextureLoader()
-    loader.load('/logo.png', (tex) => {
+    loader.load(import.meta.env.BASE_URL + 'logo.png', (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace
       tex.needsUpdate = true
       setLogoTexture(tex)
@@ -247,7 +247,7 @@ export default function App() {
               <div className="panel-section">
                 <div className="panel-label">LOGO PREVIEW</div>
                 <div className="logo-preview-card">
-                  <img src="/logo.png" alt="Logo" className="logo-thumb" />
+                  <img src={import.meta.env.BASE_URL + 'logo.png'} alt="Logo" className="logo-thumb" />
                   <div className="logo-preview-info">
                     <span className="logo-preview-name">Custom Logo</span>
                     <span className="logo-preview-sub">Select a zone below</span>
