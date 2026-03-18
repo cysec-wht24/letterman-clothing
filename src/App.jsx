@@ -15,7 +15,6 @@ function ColorSwatch({ color, isSelected, onClick }) {
   )
 }
 
-// Zone card — mimics varsitybase style
 function ZoneCard({ zone, isSelected, onClick }) {
   return (
     <button
@@ -23,21 +22,16 @@ function ZoneCard({ zone, isSelected, onClick }) {
       onClick={() => onClick(zone)}
     >
       <div className="zone-preview">
-        {/* Mini shirt SVG with highlighted zone indicator */}
         <svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg" className="zone-svg">
-          {/* Shirt body */}
           <path d="M18 8 L8 20 L16 23 L16 62 L44 62 L44 23 L52 20 L42 8 L34 12 Q30 14 26 12 Z"
             fill="#2a2520" stroke="#3a3530" strokeWidth="0.8"/>
-          {/* Sleeves */}
           <path d="M18 8 L8 20 L16 23 L18 18 Z" fill="#222" stroke="#3a3530" strokeWidth="0.6"/>
           <path d="M42 8 L52 20 L44 23 L42 18 Z" fill="#222" stroke="#3a3530" strokeWidth="0.6"/>
-          {/* Zone highlight */}
-          {zone.id === 'left-chest'   && <rect x="18" y="22" width="11" height="9" fill="#c8a96e" opacity="0.7" rx="1"/>}
-          {zone.id === 'right-chest'  && <rect x="31" y="22" width="11" height="9" fill="#c8a96e" opacity="0.7" rx="1"/>}
-          {zone.id === 'center-chest' && <rect x="21" y="22" width="18" height="13" fill="#c8a96e" opacity="0.7" rx="1"/>}
-          {zone.id === 'back-center'  && <rect x="20" y="28" width="20" height="18" fill="#c8a96e" opacity="0.7" rx="1"/>}
-          {zone.id === 'left-sleeve'  && <rect x="9"  y="13" width="8"  height="8"  fill="#c8a96e" opacity="0.7" rx="1"/>}
-          {zone.id === 'right-sleeve' && <rect x="43" y="13" width="8"  height="8"  fill="#c8a96e" opacity="0.7" rx="1"/>}
+          {zone.id === 'left-chest'   && <rect x="18" y="22" width="11" height="9"  fill="#c8a96e" opacity="0.8" rx="1"/>}
+          {zone.id === 'right-chest'  && <rect x="31" y="22" width="11" height="9"  fill="#c8a96e" opacity="0.8" rx="1"/>}
+          {zone.id === 'back-center'  && <rect x="20" y="28" width="20" height="18" fill="#c8a96e" opacity="0.8" rx="1"/>}
+          {zone.id === 'left-sleeve'  && <rect x="9"  y="13" width="8"  height="8"  fill="#c8a96e" opacity="0.8" rx="1"/>}
+          {zone.id === 'right-sleeve' && <rect x="43" y="13" width="8"  height="8"  fill="#c8a96e" opacity="0.8" rx="1"/>}
         </svg>
       </div>
       <span className="zone-label">{zone.label}</span>
@@ -93,8 +87,6 @@ export default function App() {
 
   const handleZoneSelect = (zone) => {
     setSelectedZoneId(prev => prev === zone.id ? null : zone.id)
-    // Auto-rotate to show the selected zone
-    if (zone.id === 'back-center') setAutoRotate(false)
   }
 
   const selectedZone = PLACEMENT_ZONES.find(z => z.id === selectedZoneId)
@@ -118,7 +110,6 @@ export default function App() {
       </header>
 
       <main className="main">
-
         {/* LEFT PANEL */}
         <aside className="panel panel-left">
           <div className="panel-section">
@@ -152,7 +143,6 @@ export default function App() {
             <p className="hint-text">Drag to orbit · Scroll to zoom</p>
           </div>
 
-          {/* Active placement status */}
           {selectedZoneId && (
             <>
               <div className="divider" />
@@ -184,7 +174,6 @@ export default function App() {
               />
             </Suspense>
           </div>
-
           <div className={`color-toast ${showColorName ? 'visible' : ''}`}>
             <span className="toast-swatch" style={{ background: selectedColor?.hex }} />
             <div className="toast-info">
@@ -203,7 +192,6 @@ export default function App() {
               onClick={() => setActiveTab('logo')}>LOGO</button>
           </div>
 
-          {/* COLOR TAB */}
           {activeTab === 'color' && (
             <>
               <div className="panel-section">
@@ -241,27 +229,30 @@ export default function App() {
             </>
           )}
 
-          {/* LOGO TAB */}
           {activeTab === 'logo' && (
             <div className="logo-tab-content">
               <div className="panel-section">
                 <div className="panel-label">LOGO PREVIEW</div>
                 <div className="logo-preview-card">
-                  <img src={import.meta.env.BASE_URL + 'logo.png'} alt="Logo" className="logo-thumb" />
+                  <img
+                    src={import.meta.env.BASE_URL + 'logo.png'}
+                    alt="Logo"
+                    className="logo-thumb"
+                  />
                   <div className="logo-preview-info">
                     <span className="logo-preview-name">Custom Logo</span>
-                    <span className="logo-preview-sub">Select a zone below</span>
+                    <span className="logo-preview-sub">
+                      {selectedZoneId ? `Placed on ${selectedZone?.label}` : 'Select a zone below'}
+                    </span>
                   </div>
                 </div>
               </div>
-
               <div className="panel-section" style={{paddingBottom: 8}}>
                 <div className="panel-label">PLACEMENT ZONE</div>
                 <p className="hint-text" style={{marginBottom: 12}}>
                   Select where to place your logo on the shirt
                 </p>
               </div>
-
               <div className="zone-grid-wrap">
                 <div className="zone-grid">
                   {PLACEMENT_ZONES.map(zone => (

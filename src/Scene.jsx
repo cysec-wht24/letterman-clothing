@@ -49,9 +49,14 @@ export default function Scene({ color, autoRotate, onInteractionChange, selected
       </Suspense>
       <CameraRig />
       <OrbitControls
-        enablePan={false} enableZoom={true}
-        minDistance={0.3} maxDistance={20}
-        minPolarAngle={Math.PI * 0.05} maxPolarAngle={Math.PI * 0.95}
+        enablePan={false}
+        enableZoom={true}
+        autoRotate={autoRotate}
+        autoRotateSpeed={2}
+        minDistance={0.3}
+        maxDistance={20}
+        minPolarAngle={Math.PI * 0.05}
+        maxPolarAngle={Math.PI * 0.95}
         rotateSpeed={0.65}
         onStart={() => onInteractionChange(true)}
         onEnd={() => onInteractionChange(false)}

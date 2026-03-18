@@ -3,161 +3,137 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 
+// Patch zones mapped to their exact material names from the GLB.
+// Each patch is a real plane mesh sitting flush on the shirt surface,
+// modelled in Blender and exported. We find the material by name
+// and set its texture — no floating planes, no position guessing.
 export const PLACEMENT_ZONES = [
-  { id: 'left-chest',   label: 'Left Chest',   icon: '◧', uv: [-0.10,  0.10, +1], scale: [0.11, 0.075] },
-  { id: 'right-chest',  label: 'Right Chest',  icon: '◨', uv: [+0.10,  0.10, +1], scale: [0.11, 0.075] },
-  { id: 'center-chest', label: 'Center Chest', icon: '▣', uv: [ 0.00,  0.05, +1], scale: [0.20, 0.14]  },
-  { id: 'back-center',  label: 'Back Center',  icon: '◫', uv: [ 0.00,  0.05, -1], scale: [0.22, 0.17]  },
-  { id: 'left-sleeve',  label: 'Left Sleeve',  icon: '◁', uv: [-1,     0.05,  0], scale: [0.07, 0.06]  },
-  { id: 'right-sleeve', label: 'Right Sleeve', icon: '▷', uv: [+1,     0.05,  0], scale: [0.07, 0.06]  },
+  {
+    id: 'left-chest',
+    label: 'Left Chest',
+    icon: '◧',
+    materialName: 'Material.007',   // Node Plane.001: T=(-0.126, 1.466, -0.084)
+  },
+  {
+    id: 'right-chest',
+    label: 'Right Chest',
+    icon: '◨',
+    materialName: 'Material.008',   // Node Plane.002: T=(0.029, 1.476, 0.018)
+  },
+  {
+    id: 'back-center',
+    label: 'Back Center',
+    icon: '◫',
+    materialName: 'Material.001',   // Node Plane: T=(0.075, 1.432, -0.271)
+  },
+  {
+    id: 'left-sleeve',
+    label: 'Left Sleeve',
+    icon: '◁',
+    materialName: 'Material.009',   // Node Plane.003: T=(-0.240, 1.451, -0.305)
+  },
+  {
+    id: 'right-sleeve',
+    label: 'Right Sleeve',
+    icon: '▷',
+    materialName: 'Material.010',   // Node Plane.004: T=(0.281, 1.484, -0.018)
+  },
 ]
 
+const PATCH_MAT_NAMES = new Set(PLACEMENT_ZONES.map(z => z.materialName))
+
 export default function ShirtModel({ color, autoRotate, selectedZoneId, logoTexture }) {
-  const groupRef    = useRef()
-  const logoMeshRef = useRef(null)
-  const boundsRef   = useRef(null)   // stores { min, max, center } after normalization
-  const { scene } = useGLTF(import.meta.env.BASE_URL + 't_shirt.glb')
+  const groupRef = useRef()
+  const { scene } = useGLTF(import.meta.env.BASE_URL + 'shirt.glb')
   const { camera, controls } = useThree()
-  const readyRef    = useRef(false)
+  const readyRef = useRef(false)
+  const prevMaterialRef = useRef(null)
 
   // ── Normalize model ───────────────────────────────────────
   useEffect(() => {
     if (!scene || readyRef.current) return
-
     const box = new THREE.Box3().setFromObject(scene)
-    const rawCenter = new THREE.Vector3()
-    const rawSize   = new THREE.Vector3()
-    box.getCenter(rawCenter)
-    box.getSize(rawSize)
-
-    scene.position.set(-rawCenter.x, -rawCenter.y, -rawCenter.z)
-    const maxDim = Math.max(rawSize.x, rawSize.y, rawSize.z)
-    scene.scale.setScalar(1.0 / maxDim)
-
+    const center = new THREE.Vector3()
+    const size = new THREE.Vector3()
+    box.getCenter(center)
+    box.getSize(size)
+    scene.position.set(-center.x, -center.y, -center.z)
+    scene.scale.setScalar(1.0 / Math.max(size.x, size.y, size.z))
     scene.updateMatrixWorld(true)
     const box2 = new THREE.Box3().setFromObject(scene)
     const c2 = new THREE.Vector3()
     box2.getCenter(c2)
     scene.position.y -= c2.y
 
-    // Store final bounds for use in logo placement
-    scene.updateMatrixWorld(true)
-    const box3 = new THREE.Box3().setFromObject(scene)
-    const bCenter = new THREE.Vector3()
-    const bSize   = new THREE.Vector3()
-    box3.getCenter(bCenter)
-    box3.getSize(bSize)
-    boundsRef.current = {
-      min: box3.min.clone(),
-      max: box3.max.clone(),
-      center: bCenter,
-      size: bSize,
-    }
-
-    console.log('Shirt bounds after norm:',
-      'X', box3.min.x.toFixed(3), '..', box3.max.x.toFixed(3),
-      'Y', box3.min.y.toFixed(3), '..', box3.max.y.toFixed(3),
-      'Z', box3.min.z.toFixed(3), '..', box3.max.z.toFixed(3),
-    )
-
     camera.position.set(0, 0, 1.8)
     camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
     if (controls) { controls.target.set(0, 0, 0); controls.update() }
 
+    // Hide all patch planes initially
+    scene.traverse(obj => {
+      if (obj.isMesh) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+        mats.forEach(m => {
+          if (PATCH_MAT_NAMES.has(m.name)) {
+            m.transparent = true
+            m.opacity = 0
+            m.needsUpdate = true
+          }
+        })
+      }
+    })
+
     readyRef.current = true
   }, [scene, camera, controls])
 
-  // ── Recolor ───────────────────────────────────────────────
+  // ── Recolor shirt body only ───────────────────────────────
   useEffect(() => {
     scene.traverse(obj => {
       if (obj.isMesh) {
         const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
-        mats.forEach(m => { m.color.set(color); m.needsUpdate = true })
+        mats.forEach(m => {
+          if (!PATCH_MAT_NAMES.has(m.name)) {
+            m.color.set(color)
+            m.needsUpdate = true
+          }
+        })
       }
     })
   }, [color, scene])
 
-  // ── Place logo ────────────────────────────────────────────
+  // ── Apply logo to selected patch material ─────────────────
   useEffect(() => {
-    const group = groupRef.current
-    if (!group) return
-
-    if (logoMeshRef.current) {
-      group.remove(logoMeshRef.current)
-      logoMeshRef.current.geometry.dispose()
-      logoMeshRef.current.material.dispose()
-      logoMeshRef.current = null
+    // Clear previous patch
+    if (prevMaterialRef.current) {
+      prevMaterialRef.current.map = null
+      prevMaterialRef.current.opacity = 0
+      prevMaterialRef.current.needsUpdate = true
+      prevMaterialRef.current = null
     }
 
-    if (!selectedZoneId || !logoTexture || !boundsRef.current) return
+    if (!selectedZoneId || !logoTexture) return
 
     const zone = PLACEMENT_ZONES.find(z => z.id === selectedZoneId)
     if (!zone) return
 
-    const { min, max, center } = boundsRef.current
-    const [ux, uy, uz] = zone.uv
-    const [w, h] = zone.scale
-
-    // Compute world position from bounds + UV-like offsets
-    // uz=+1 means front face, uz=-1 means back face, etc.
-    let x, y, z, rx = 0, ry = 0, rz = 0
-
-    if (uz === 1) {
-      // Front face
-      x = center.x + ux * (max.x - center.x) * 0.65
-      y = center.y + uy * (max.y - center.y) * 0.55
-      z = max.z + 0.002
-      rx = 0; ry = 0
-    } else if (uz === -1) {
-      // Back face
-      x = center.x + ux * (max.x - center.x) * 0.65
-      y = center.y + uy * (max.y - center.y) * 0.55
-      z = min.z - 0.002
-      ry = Math.PI
-    } else if (ux === 1) {
-      // Right sleeve — outermost X face
-      x = max.x + 0.002
-      y = center.y + uy * (max.y - center.y) * 0.4
-      z = center.z
-      ry = Math.PI / 2
-    } else if (ux === -1) {
-      // Left sleeve
-      x = min.x - 0.002
-      y = center.y + uy * (max.y - center.y) * 0.4
-      z = center.z
-      ry = -Math.PI / 2
-    }
-
-    const mat = new THREE.MeshStandardMaterial({
-      map: logoTexture,
-      transparent: true,
-      alphaTest: 0.01,
-      depthTest: true,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -4,
-      polygonOffsetUnits: -4,
-      roughness: 0.88,
-      metalness: 0.0,
-      side: THREE.DoubleSide,
+    scene.traverse(obj => {
+      if (obj.isMesh) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+        mats.forEach(m => {
+          if (m.name === zone.materialName) {
+            m.map = logoTexture
+            m.transparent = true
+            m.opacity = 1
+            m.roughness = 0.85
+            m.metalness = 0
+            m.needsUpdate = true
+            prevMaterialRef.current = m
+          }
+        })
+      }
     })
-
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat)
-    mesh.position.set(x, y, z)
-    mesh.rotation.set(rx, ry, rz)
-    mesh.renderOrder = 1
-
-    group.add(mesh)
-    logoMeshRef.current = mesh
-
-    console.log(`Logo placed: zone=${selectedZoneId} pos=(${x.toFixed(3)},${y.toFixed(3)},${z.toFixed(3)})`)
   }, [selectedZoneId, logoTexture, scene])
-
-  useFrame((_, dt) => {
-    if (groupRef.current && autoRotate)
-      groupRef.current.rotation.y += dt * 0.35
-  })
 
   return (
     <group ref={groupRef}>
@@ -166,4 +142,4 @@ export default function ShirtModel({ color, autoRotate, selectedZoneId, logoText
   )
 }
 
-useGLTF.preload(import.meta.env.BASE_URL + 't_shirt.glb')
+useGLTF.preload(import.meta.env.BASE_URL + 'shirt.glb')
