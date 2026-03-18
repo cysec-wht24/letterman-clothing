@@ -59,9 +59,19 @@ export default function App() {
   useEffect(() => {
     const loader = new THREE.TextureLoader()
     loader.load(import.meta.env.BASE_URL + 'logo.png', (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace
-      tex.needsUpdate = true
-      setLogoTexture(tex)
+      // Rotate texture 180° to fix inverted UV on Blender patches
+      const image = tex.image
+      const canvas = document.createElement('canvas')
+      canvas.width = image.width
+      canvas.height = image.height
+      const ctx = canvas.getContext('2d')
+      ctx.translate(image.width / 2, image.height / 2)
+      ctx.rotate(Math.PI)
+      ctx.drawImage(image, -image.width / 2, -image.height / 2)
+      const rotatedTex = new THREE.CanvasTexture(canvas)
+      rotatedTex.colorSpace = THREE.SRGBColorSpace
+      rotatedTex.needsUpdate = true
+      setLogoTexture(rotatedTex)
     })
   }, [])
 
