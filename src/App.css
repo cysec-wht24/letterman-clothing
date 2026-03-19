@@ -1219,3 +1219,121 @@
     height: 300px;
   }
 }
+
+/* ─── MOBILE FIXES ───────────────────────── */
+@media (max-width: 768px) {
+
+  /* Panel right — remove fixed height, let it grow naturally */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    height: auto !important;
+    overflow: visible !important;
+    position: relative;
+  }
+
+  /* Remove overflow hidden from color grid wrap */
+  .color-grid-wrap {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 16px 16px;
+  }
+
+  /* Zone grid wrap */
+  .zone-grid-wrap {
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 16px 16px;
+  }
+
+  /* Logo tab content */
+  .logo-tab-content {
+    overflow: visible !important;
+    height: auto !important;
+    flex: none !important;
+  }
+
+  /* CTA section — not sticky on mobile, just normal flow */
+  .cta-section {
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 0;
+    border-top: 1px solid #181818;
+    padding-bottom: 40px !important;
+  }
+
+  /* Price row */
+  .price-row {
+    margin-bottom: 16px;
+  }
+
+  /* Prevent the divider before CTA from adding weird gaps */
+  .panel-right .divider:last-of-type {
+    display: none;
+  }
+
+  /* App must not clip anything */
+  .app {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 100vh;
+  }
+
+  .main {
+    overflow: visible !important;
+    height: auto !important;
+  }
+}
+
+/* ─── PANEL SCROLL AREA ──────────────────── */
+
+/* Desktop: scroll area fills available space, CTA stays pinned bottom */
+@media (min-width: 769px) {
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .panel-cta-wrap {
+    flex-shrink: 0;
+  }
+}
+
+/* Mobile: everything flows naturally, no fixed heights */
+@media (max-width: 768px) {
+  .panel-scroll-area {
+    overflow: visible;
+    height: auto;
+  }
+
+  .panel-cta-wrap {
+    position: relative;
+    margin-top: 8px;
+    padding-bottom: 32px;
+  }
+
+  .color-grid-wrap {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .zone-grid-wrap {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .logo-tab-content {
+    overflow: visible !important;
+    height: auto !important;
+    flex: none !important;
+  }
+}

@@ -17,10 +17,7 @@ function ColorSwatch({ color, isSelected, onClick }) {
 
 function ZoneCard({ zone, isSelected, onClick }) {
   return (
-    <button
-      className={`zone-card ${isSelected ? 'selected' : ''}`}
-      onClick={() => onClick(zone)}
-    >
+    <button className={`zone-card ${isSelected ? 'selected' : ''}`} onClick={() => onClick(zone)}>
       <div className="zone-preview">
         <svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg" className="zone-svg">
           <path d="M18 8 L8 20 L16 23 L16 62 L44 62 L44 23 L52 20 L42 8 L34 12 Q30 14 26 12 Z"
@@ -55,11 +52,9 @@ export default function App() {
     ? COLOR_PALETTE
     : COLOR_PALETTE.filter(c => c.category === activeCategory)
 
-  // Load logo texture once
   useEffect(() => {
     const loader = new THREE.TextureLoader()
     loader.load(import.meta.env.BASE_URL + 'logo.png', (tex) => {
-      // Rotate texture 180° to fix inverted UV on Blender patches
       const image = tex.image
       const canvas = document.createElement('canvas')
       canvas.width = image.width
@@ -117,7 +112,8 @@ export default function App() {
       </header>
 
       <main className="main">
-        {/* LEFT PANEL */}
+
+        {/* LEFT PANEL — desktop only */}
         <aside className="panel panel-left">
           <div className="panel-section">
             <div className="panel-label">PRODUCT</div>
@@ -149,7 +145,6 @@ export default function App() {
             </button>
             <p className="hint-text">Drag to orbit · Scroll to zoom</p>
           </div>
-
           {selectedZoneId && (
             <>
               <div className="divider" />
@@ -192,6 +187,8 @@ export default function App() {
 
         {/* RIGHT PANEL */}
         <aside className="panel panel-right">
+
+          {/* Tabs */}
           <div className="panel-tabs">
             <button className={`panel-tab ${activeTab === 'color' ? 'active' : ''}`}
               onClick={() => setActiveTab('color')}>COLOR</button>
@@ -199,97 +196,97 @@ export default function App() {
               onClick={() => setActiveTab('logo')}>LOGO</button>
           </div>
 
-          {activeTab === 'color' && (
-            <>
-              <div className="panel-section">
-                <div className="panel-label-row">
-                  <span className="panel-label">COLOR</span>
-                  <span className="panel-label-count">{filteredColors.length} SHADES</span>
+          {/* Scrollable content area */}
+          <div className="panel-scroll-area">
+
+            {activeTab === 'color' && (
+              <>
+                <div className="panel-section">
+                  <div className="panel-label-row">
+                    <span className="panel-label">COLOR</span>
+                    <span className="panel-label-count">{filteredColors.length} SHADES</span>
+                  </div>
+                  <div className="selected-color-display">
+                    <div className="selected-preview" style={{ background: selectedColor?.hex }} />
+                    <div className="selected-info">
+                      <span className="selected-name">{selectedColor?.name}</span>
+                      <span className="selected-hex">{selectedColor?.hex}</span>
+                      <span className="selected-cat">{selectedColor?.category}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="selected-color-display">
-                  <div className="selected-preview" style={{ background: selectedColor?.hex }} />
-                  <div className="selected-info">
-                    <span className="selected-name">{selectedColor?.name}</span>
-                    <span className="selected-hex">{selectedColor?.hex}</span>
-                    <span className="selected-cat">{selectedColor?.category}</span>
+                <div className="category-tabs">
+                  {CATEGORIES.map(cat => (
+                    <button key={cat}
+                      className={`cat-tab ${activeCategory === cat ? 'active' : ''}`}
+                      onClick={() => setActiveCategory(cat)}>
+                      {cat === 'Statement' ? 'STATE' : cat.toUpperCase().slice(0,6)}
+                    </button>
+                  ))}
+                </div>
+                <div className="color-grid-wrap">
+                  <div className="color-grid">
+                    {filteredColors.map(color => (
+                      <ColorSwatch key={color.id} color={color}
+                        isSelected={color.id === selectedColorId}
+                        onClick={handleColorSelect} />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'logo' && (
+              <div className="logo-tab-content">
+                <div className="panel-section">
+                  <div className="panel-label">LOGO PREVIEW</div>
+                  <div className="logo-preview-card">
+                    <img src={import.meta.env.BASE_URL + 'logo.png'} alt="Logo" className="logo-thumb" />
+                    <div className="logo-preview-info">
+                      <span className="logo-preview-name">Custom Logo</span>
+                      <span className="logo-preview-sub">
+                        {selectedZoneId ? `Placed on ${selectedZone?.label}` : 'Select a zone below'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="panel-section" style={{paddingBottom: 8}}>
+                  <div className="panel-label">PLACEMENT ZONE</div>
+                  <p className="hint-text" style={{marginBottom: 12}}>Select where to place your logo on the shirt</p>
+                </div>
+                <div className="zone-grid-wrap">
+                  <div className="zone-grid">
+                    {PLACEMENT_ZONES.map(zone => (
+                      <ZoneCard key={zone.id} zone={zone}
+                        isSelected={selectedZoneId === zone.id}
+                        onClick={handleZoneSelect} />
+                    ))}
                   </div>
                 </div>
               </div>
-              <div className="category-tabs">
-                {CATEGORIES.map(cat => (
-                  <button key={cat}
-                    className={`cat-tab ${activeCategory === cat ? 'active' : ''}`}
-                    onClick={() => setActiveCategory(cat)}>
-                    {cat === 'Statement' ? 'STATE' : cat.toUpperCase().slice(0,6)}
-                  </button>
-                ))}
-              </div>
-              <div className="color-grid-wrap">
-                <div className="color-grid">
-                  {filteredColors.map(color => (
-                    <ColorSwatch key={color.id} color={color}
-                      isSelected={color.id === selectedColorId}
-                      onClick={handleColorSelect} />
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+            )}
 
-          {activeTab === 'logo' && (
-            <div className="logo-tab-content">
-              <div className="panel-section">
-                <div className="panel-label">LOGO PREVIEW</div>
-                <div className="logo-preview-card">
-                  <img
-                    src={import.meta.env.BASE_URL + 'logo.png'}
-                    alt="Logo"
-                    className="logo-thumb"
-                  />
-                  <div className="logo-preview-info">
-                    <span className="logo-preview-name">Custom Logo</span>
-                    <span className="logo-preview-sub">
-                      {selectedZoneId ? `Placed on ${selectedZone?.label}` : 'Select a zone below'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="panel-section" style={{paddingBottom: 8}}>
-                <div className="panel-label">PLACEMENT ZONE</div>
-                <p className="hint-text" style={{marginBottom: 12}}>
-                  Select where to place your logo on the shirt
-                </p>
-              </div>
-              <div className="zone-grid-wrap">
-                <div className="zone-grid">
-                  {PLACEMENT_ZONES.map(zone => (
-                    <ZoneCard
-                      key={zone.id}
-                      zone={zone}
-                      isSelected={selectedZoneId === zone.id}
-                      onClick={handleZoneSelect}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          </div>{/* end panel-scroll-area */}
 
-          <div className="divider" />
-          <div className="panel-section cta-section">
-            <div className="price-row">
-              <span className="price">$89.00</span>
-              <span className="price-tag">FREE SHIPPING</span>
+          {/* CTA — always below content, never overlapping */}
+          <div className="panel-cta-wrap">
+            <div className="divider" />
+            <div className="panel-section cta-section">
+              <div className="price-row">
+                <span className="price">$89.00</span>
+                <span className="price-tag">FREE SHIPPING</span>
+              </div>
+              <button className="cta-btn">
+                <span>ADD TO BAG</span>
+                <span className="cta-arrow">→</span>
+              </button>
+              <button className="wishlist-btn">
+                <span>♡</span>
+                <span>SAVE TO WISHLIST</span>
+              </button>
             </div>
-            <button className="cta-btn">
-              <span>ADD TO BAG</span>
-              <span className="cta-arrow">→</span>
-            </button>
-            <button className="wishlist-btn">
-              <span>♡</span>
-              <span>SAVE TO WISHLIST</span>
-            </button>
           </div>
+
         </aside>
       </main>
     </div>
