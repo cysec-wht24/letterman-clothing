@@ -36,6 +36,38 @@ function ZoneCard({ zone, isSelected, onClick }) {
   )
 }
 
+// Mobile size selector component
+function MobileSizeSelector() {
+  const [selected, setSelected] = useState('M')
+  return (
+    <div className="mobile-product-strip">
+      <div className="mobile-strip-top">
+        <div className="mobile-strip-row">
+          <span className="mobile-strip-label">SIZE</span>
+          <span className="mobile-strip-sub">CLASSIC CREW · RELAXED FIT</span>
+        </div>
+        <div className="size-grid">
+          {['XS','S','M','L','XL','XXL'].map(s => (
+            <button
+              key={s}
+              className={`size-btn ${selected === s ? 'size-selected' : ''}`}
+              onClick={() => setSelected(s)}
+            >{s}</button>
+          ))}
+        </div>
+      </div>
+      <div className="mobile-strip-details">
+        {[['FABRIC','Supima Cotton'],['WEIGHT','230 GSM'],['ORIGIN','Portugal']].map(([k,v]) => (
+          <div key={k} className="mobile-detail-item">
+            <span className="mobile-detail-key">{k}</span>
+            <span className="mobile-detail-val">{v}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [selectedColorId, setSelectedColorId] = useState(DEFAULT_COLOR_ID)
   const [activeCategory, setActiveCategory] = useState('All')
@@ -105,7 +137,7 @@ export default function App() {
         <div className="header-left">
           <span className="brand-mark">◈</span>
           <div className="brand-text">
-            <span className="brand-name">COMPANY</span>
+            <span className="brand-name">STITCH</span>
           </div>
         </div>
         <div className="header-right" />
@@ -165,7 +197,7 @@ export default function App() {
 
         {/* VIEWPORT */}
         <div className="viewport">
-          <div className="canvas-wrap">
+          <div className="canvas-wrap" style={{position:'absolute',inset:0,width:'100%',height:'100%'}}>
             <Suspense fallback={null}>
               <Scene
                 color={selectedColor?.hex || '#F8F6F2'}
@@ -185,10 +217,12 @@ export default function App() {
           </div>
         </div>
 
+        {/* MOBILE PRODUCT STRIP — shows between viewport and right panel */}
+        <MobileSizeSelector />
+
         {/* RIGHT PANEL */}
         <aside className="panel panel-right">
 
-          {/* Tabs */}
           <div className="panel-tabs">
             <button className={`panel-tab ${activeTab === 'color' ? 'active' : ''}`}
               onClick={() => setActiveTab('color')}>COLOR</button>
@@ -196,7 +230,6 @@ export default function App() {
               onClick={() => setActiveTab('logo')}>LOGO</button>
           </div>
 
-          {/* Scrollable content area */}
           <div className="panel-scroll-area">
 
             {activeTab === 'color' && (
@@ -266,9 +299,8 @@ export default function App() {
               </div>
             )}
 
-          </div>{/* end panel-scroll-area */}
+          </div>
 
-          {/* CTA — always below content, never overlapping */}
           <div className="panel-cta-wrap">
             <div className="divider" />
             <div className="panel-section cta-section">

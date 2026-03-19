@@ -32,7 +32,7 @@ export default function Scene({ color, autoRotate, onInteractionChange, selected
       camera={{ position: [0, 0, 3], fov: 40, near: 0.01, far: 1000 }}
       gl={{ antialias: true, powerPreference: 'default', stencil: false, alpha: false }}
       dpr={1}
-      style={{ background: '#0d0b09' }}
+      style={{ background: '#0d0b09', width: '100%', height: '100%' }}
     >
       <ambientLight intensity={0.55} color="#f0ece4" />
       <directionalLight position={[-2.5, 3, 2.5]} intensity={2.4} color="#fff8f0" />
