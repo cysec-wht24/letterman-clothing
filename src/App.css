@@ -1096,3 +1096,126 @@
   display: flex;
   flex-direction: column;
 }
+
+/* ─── MOBILE RESPONSIVE ──────────────────── */
+@media (max-width: 768px) {
+  html, body, #root {
+    overflow: auto;
+    height: auto;
+    min-height: 100%;
+  }
+
+  .app {
+    overflow: auto;
+    height: auto;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  .bg-grid,
+  .bg-vignette {
+    position: fixed;
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 0 16px;
+    height: 48px;
+  }
+
+  .header-center {
+    display: none;
+  }
+
+  .main {
+    flex-direction: column;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* 3D viewport — full width, fixed height */
+  .viewport {
+    width: 100%;
+    height: 360px;
+    flex-shrink: 0;
+    order: 1;
+  }
+
+  /* Left panel — hidden on mobile, info moves to bottom */
+  .panel-left {
+    display: none;
+  }
+
+  /* Right panel — full width, scrollable */
+  .panel-right {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #181818;
+    overflow: visible;
+    height: auto;
+    order: 2;
+  }
+
+  .color-grid-wrap {
+    overflow: visible;
+    height: auto;
+    max-height: none;
+  }
+
+  .zone-grid-wrap {
+    overflow: visible;
+    height: auto;
+  }
+
+  .cta-section {
+    padding-bottom: 32px;
+  }
+
+  /* Color grid — more columns on mobile */
+  .color-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  /* Zone grid */
+  .zone-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Category tabs — scrollable */
+  .category-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  .cat-tab {
+    flex-shrink: 0;
+  }
+
+  /* Toast position */
+  .color-toast {
+    top: 12px;
+  }
+
+  /* Size grid full width */
+  .size-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .color-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .zone-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .viewport {
+    height: 300px;
+  }
+}

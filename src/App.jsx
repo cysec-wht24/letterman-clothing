@@ -110,11 +110,8 @@ export default function App() {
         <div className="header-left">
           <span className="brand-mark">◈</span>
           <div className="brand-text">
-            <span className="brand-name">STITCH</span>
+            <span className="brand-name">COMPANY</span>
           </div>
-        </div>
-        <div className="header-center">
-          <span className="header-tag">UNISEX CLASSIC TEE — SS25</span>
         </div>
         <div className="header-right" />
       </header>
